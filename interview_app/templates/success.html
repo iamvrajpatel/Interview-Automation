@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Access Granted</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            text-align: center;
+        }
+
+        .success-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 3rem 4rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            animation: scaleUp 0.8s ease;
+        }
+
+        .checkmark {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: block;
+            stroke-width: 3;
+            stroke: #48bb78;
+            stroke-miterlimit: 10;
+            margin: 0 auto 2rem;
+            animation: fill 0.4s ease-in-out forwards, scale 0.3s ease-in-out both;
+        }
+
+        .checkmark__circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+
+        .checkmark__check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+        }
+
+        h1 {
+            color: #2d3748;
+            margin-bottom: 1rem;
+            font-size: 2.5rem;
+        }
+
+        p {
+            color: #4a5568;
+            margin-bottom: 2rem;
+        }
+
+        .return-btn {
+            padding: 0.8rem 2rem;
+            background: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .return-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        @keyframes scaleUp {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes stroke {
+            100% {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes scale {
+            0%, 100% {
+                transform: none;
+            }
+            50% {
+                transform: scale3d(1.1, 1.1, 1);
+            }
+        }
+
+        @keyframes fill {
+            100% {
+                box-shadow: inset 0px 0px 0px 50px #fff;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+        </svg>
+        <h1>Authentication Successful!</h1>
+        <p>Welcome to your secure portal</p>
+        <button class="return-btn" onclick="handleButtonClick()">Return to Home</button>
+    </div>
+    <script>
+        function handleButtonClick() {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/lets_begin", false); // false makes it synchronous
+            xhr.setRequestHeader("Content-Type", "application/json");
+        
+            try {
+                xhr.send(); // Sends the request
+                if (xhr.status === 200) {
+                    window.location.href = '/lets_begin'; // Redirects after success
+                } else {
+                    console.error('Request failed:', xhr.status);
+                }
+            } catch (error) {
+                console.error('Error occurred:', error);
+            }
+        }
+    </script>
+</body>
+</html>

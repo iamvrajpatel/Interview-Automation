@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview Process</title>
+    <link rel="stylesheet" href="/static/interview.css">
+    <script src="/static/interview.js"></script>
+
+</head>
+
+<body>
+    <h1>AI-Powered Interview Process</h1>
+
+    <!-- Start Interview Section -->
+    <div class="section" id="start-interview-section">
+        <h2>Required Inputs</h2>
+        <form id="interview-form" method="POST" enctype="multipart/form-data">
+            <!-- Country -->
+            <label for="country_name">Choose a country:</label>
+            <select name="country_name" id="country" required>
+                <option value="" disabled selected>Select your country</option>
+                {% for country in countries %}
+                <option value="{{ country }}">{{ country }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Board Dropdown -->
+            <label for="board_name">Choose a board:</label>
+            <select name="board_name" id="board_name" required>
+                <option value="" disabled selected>Select your board</option>
+                {% for board in boards %}
+                <option value="{{ board }}">{{ board }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Grade Dropdown -->
+            <label for="grade">Choose a grade:</label>
+            <select name="grade" id="grade" required>
+                <option value="" disabled selected>Select your grade</option>
+                {% for grade in grades %}
+                <option value="{{ grade }}">{{ grade }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Subject Dropdown -->
+            <label for="subject_name">Choose a subject:</label>
+            <select name="subject_name" id="subject_name" required>
+                <option value="" disabled selected>Select your subject</option>
+                <!-- Subject options will be populated based on the selected grade -->
+            </select>
+
+            <!-- File Uploads -->
+            <label for="job_description">Upload Job Description:</label>
+            <input type="file" name="job_description" id="job_description" accept=".txt,.doc,.docx,.pdf" required>
+
+            <label for="resume">Upload Resume:</label>
+            <input type="file" name="resume" id="resume" accept=".txt,.doc,.docx,.pdf" required>
+
+            <!-- Submit Button with Loading Spinner -->
+            <button type="submit" id="start-button">Start Interview</button>
+            <div class="spinner" id="loading-spinner"></div>
+        </form>
+    </div>
+
+    <!-- Video Element for Local Stream -->
+    <video id="localVideo" autoplay muted playsinline></video>
+
+    <!-- Interview Questions Section -->
+    <div class="section" id="interview-questions-section" style="display:none;">
+        <h2>Interview Questions</h2>
+        <div id="topic-display"></div>
+        <div id="question-display"></div>
+
+        <!-- Countdown Spinner -->
+        <div id="countdown-spinner" style="display: none;">
+            <div class="countdown-icon-spinner"></div>
+            Recording starts in <span id="countdown-timer">4</span> seconds...
+        </div>
+
+        <!-- Record and Stop Buttons -->
+        <!-- Record button is hidden as recording starts automatically -->
+        <button id="record" style="display: none;">Record Answer</button>
+        <button id="stop" disabled>Stop Recording</button>
+        <audio id="player" controls></audio>
+        <div id="transcription"></div>
+        <button id="submit-answer" style="display:none;">Submit Answer</button>
+    </div>
+
+    <!-- Questions List Section (Displayed After Interview) -->
+    <div id="questions-list-section" style="display: none;">
+        <h2>Your Interview Responses</h2>
+        <div id="questions-list"></div>
+    </div>
+
+    <!-- Final Summary Section (Displayed After Interview) -->
+    <div id="final-message" style="display: none;">
+        <h2>Interview Summary</h2>
+        <div id="summary-content"></div>
+    </div>
+
+</body>
+<script>
+    window.onbeforeunload = function () {
+        window.location.href = '/';
+    };
+
+    // Helper function to display the summary
+    function displaySummary(summary, topicAverages) {
+        // Hide questions list and show summary
+        document.getElementById('questions-list-section').style.display = 'none';
+        document.getElementById('final-message').style.display = 'block';
+
+        const summaryContent = document.getElementById('summary-content');
+        summaryContent.innerHTML = '';
+
+        // Display topic-wise averages
+        if (topicAverages.length > 0) {
+            const averagesSection = document.createElement('section');
+            const averagesHeader = document.createElement('h2');
+            averagesHeader.textContent = 'Topic-Wise Average Scores';
+            averagesSection.appendChild(averagesHeader);
+
+            const averagesTable = document.createElement('table');
+            averagesTable.innerHTML = `
+            <thead>
+                <tr>
+                    <th>Topic</th>
+                    <th>Average Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${topicAverages.map(t => `
+                    <tr>
+                        <td>${sanitizeHTML(t.topic)}</td>
+                        <td>${sanitizeHTML(t.average)}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        `;
+            averagesSection.appendChild(averagesTable);
+            summaryContent.appendChild(averagesSection);
+        }
+
+        // Display evaluation keypoints
+        const qaEvaluation = summary["Q&A Evaluation"]?.Evaluation || {};
+
+        if (Object.keys(qaEvaluation).length > 0) {
+            const evaluationSection = document.createElement('section');
+            const evalHeader = document.createElement('h2');
+            evalHeader.textContent = 'Evaluation Keypoints';
+            evaluationSection.appendChild(evalHeader);
+
+            const evalList = document.createElement('ul');
+            for (const [criterion, details] of Object.entries(qaEvaluation)) {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `<strong>${sanitizeHTML(criterion)}:</strong> ${sanitizeHTML(details)}`;
+                evalList.appendChild(listItem);
+            }
+            evaluationSection.appendChild(evalList);
+            summaryContent.appendChild(evaluationSection);
+        }
+
+        // Display summary and recommendation
+        const finalRecommendation = summary["Q&A Evaluation"]?.["Final Recommendation"] || {};
+
+        if (finalRecommendation.Status || finalRecommendation.Justification) {
+            const recommendationSection = document.createElement('section');
+            const recommendationHeader = document.createElement('h2');
+            recommendationHeader.textContent = 'Summary & Recommendation';
+            recommendationSection.appendChild(recommendationHeader);
+
+            if (finalRecommendation.Status) {
+                const recommendationStatus = document.createElement('p');
+                recommendationStatus.innerHTML = `<strong>Status:</strong> ${sanitizeHTML(finalRecommendation.Status)}`;
+                recommendationSection.appendChild(recommendationStatus);
+            }
+
+            if (finalRecommendation.Justification) {
+                const recommendationJustification = document.createElement('p');
+                recommendationJustification.innerHTML = `<strong>${sanitizeHTML(finalRecommendation.Justification)}</strong>`;
+                recommendationSection.appendChild(recommendationJustification);
+            }
+
+            summaryContent.appendChild(recommendationSection);
+        }
+    }
+
+    // Helper function to sanitize HTML to prevent XSS attacks
+    function sanitizeHTML(str) {
+        if (typeof str !== 'string') return '';
+        return str.replace(/[&<>"'`=\/]/g, function (s) {
+            return ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;',
+                '/': '&#x2F;',
+                '`': '&#x60;',
+                '=': '&#x3D;'
+            })[s];
+        });
+    }
+</script>
+
+</html>

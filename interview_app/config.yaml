@@ -1,0 +1,23 @@
+daemon:
+  listen: "0.0.0.0"        # Listen on all network interfaces
+  port: 9876
+  base_url: "/api/v0"
+
+faster_whisper:
+  model_cache_dir: "/tmp/whisper-cache"
+  model: "small"            # Model size options: tiny, base, small, medium, large
+  device: "cpu"             # or "cuda" if using GPU
+  device_index: 0
+  compute_type: "int8"      # Options: "int8", "int16", "float32"
+  beam_size: 5
+  translate: false
+  language: null            # Auto-detect language or specify (e.g., "en")
+  debug:
+    save_audio: false
+    save_path: "/tmp/whisper-audio"
+
+transformations:
+  - lower
+  - title
+  # Example of regex transformations:
+  # - ["\\bhello\\b", "hi"]
